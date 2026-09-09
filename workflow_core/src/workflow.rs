@@ -156,6 +156,13 @@ impl Workflow {
         // Task timeout tracking
         let mut task_timeouts: HashMap<String, Duration> = HashMap::new();
 
+        tracing::info!(
+            name = %self.name,
+            tasks = self.tasks.len(),
+            max_parallel = self.max_parallel,
+            "workflow starting"
+        );
+
         loop {
             // Interrupt check — must be first
             if self.interrupt.load(Ordering::SeqCst) {
@@ -288,6 +295,10 @@ impl Workflow {
 
                         let monitors = task.monitors.clone();
                         let task_workdir = resolved_workdir.clone();
+                        let mode_label = match &task.mode {
+                            ExecutionMode::Direct { .. } => "direct",
+                            ExecutionMode::Queued => "queued",
+                        };
 
                         fire_hooks(
                             &monitors,
@@ -307,6 +318,11 @@ impl Workflow {
                             collect_failure_policy: task.collect_failure_policy,
                             last_periodic_fire: HashMap::new(),
                         });
+                        tracing::info!(
+                            task = %id,
+                            mode = mode_label,
+                            "task dispatched"
+                        );
                     }
                 }
             }
@@ -329,6 +345,11 @@ impl Workflow {
             std::thread::sleep(Duration::from_millis(50));
         }
 
+        tracing::info!(
+            name = %self.name,
+            elapsed_secs = workflow_start.elapsed().as_secs_f64(),
+            "workflow finished"
+        );
         Ok(build_summary(state, workflow_start))
     }
 
@@ -452,6 +473,20 @@ fn process_finished(
         hook_executor,
     );
     state.save()?;
+
+    if task_phase == crate::monitoring::TaskPhase::Completed {
+        tracing::info!(
+            task = %id,
+            elapsed_secs = t.started_at.elapsed().as_secs_f64(),
+            "task completed"
+        );
+    } else {
+        tracing::info!(
+            task = %id,
+            elapsed_secs = t.started_at.elapsed().as_secs_f64(),
+            "task failed"
+        );
+    }
 
     Ok(())
 }
