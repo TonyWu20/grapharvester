@@ -221,6 +221,7 @@ impl Workflow {
                 .map(|(k, _)| k)
                 .collect();
 
+            let mut dispatched_this_iter = 0;
             for id in dag.ready_tasks(&done_set) {
                 if handles.len() >= self.max_parallel {
                     break;
@@ -307,8 +308,16 @@ impl Workflow {
                             collect_failure_policy: task.collect_failure_policy,
                             last_periodic_fire: HashMap::new(),
                         });
+                        dispatched_this_iter += 1;
                     }
                 }
+            }
+
+            // Persist the "Running" status to disk after dispatching in this
+            // iteration, so the on-disk state file reflects in-flight tasks,
+            // not just terminal (Completed/Failed) states.
+            if dispatched_this_iter > 0 {
+                state.save()?;
             }
 
             // Check if all done
