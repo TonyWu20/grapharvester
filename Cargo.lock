@@ -774,6 +774,13 @@ checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 [[package]]
 name = "s4u_damping_sweep"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "itertools",
+ "workflow_core",
+ "workflow_utils",
+]
 
 [[package]]
 name = "scc"
