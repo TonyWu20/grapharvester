@@ -1,0 +1,15 @@
+[package]
+name = "s4u_damping_sweep"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "s4u_damping_sweep"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+itertools = { workspace = true }
+workflow_core = { path = "../../workflow_core", features = ["default-logging"] }
+workflow_utils = { path = "../../workflow_utils" }
